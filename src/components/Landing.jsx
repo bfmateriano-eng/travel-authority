@@ -1,13 +1,15 @@
 import React from 'react';
 
 export default function Landing({ onGetStarted }) {
-  // Enhanced Styles
+  const apkUrl = "https://ioulrydbxhjxoxdnulbp.supabase.co/storage/v1/object/public/public-files/pililla-to.apk";
+
+  // Existing Styles
   const pageContainer = {
     minHeight: '100vh',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    backgroundColor: '#f8f9fa', // Light gray background to show white logos
+    backgroundColor: '#f8f9fa',
     fontFamily: 'sans-serif',
     margin: 0,
     padding: 0
@@ -34,7 +36,7 @@ export default function Landing({ onGetStarted }) {
     width: '200px',
     height: 'auto',
     objectFit: 'contain',
-    backgroundColor: '#cc0000', // Red background specifically for the white logo
+    backgroundColor: '#cc0000',
     padding: '10px',
     borderRadius: '8px',
     marginBottom: '30px'
@@ -70,10 +72,35 @@ export default function Landing({ onGetStarted }) {
     transition: 'transform 0.2s'
   };
 
+  // New APK Section Styles
+  const apkSectionStyle = {
+    marginTop: '50px',
+    padding: '20px',
+    backgroundColor: '#ffffff',
+    borderRadius: '16px',
+    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+    border: '1px solid #e5e7eb',
+    textAlign: 'center',
+    maxWidth: '400px'
+  };
+
+  const downloadBtnStyle = {
+    display: 'inline-block',
+    backgroundColor: '#28a745', // Green for mobile/android feel
+    color: 'white',
+    padding: '12px 24px',
+    fontSize: '14px',
+    fontWeight: 'bold',
+    textDecoration: 'none',
+    borderRadius: '8px',
+    marginTop: '10px',
+    transition: 'background-color 0.2s'
+  };
+
   const footerDesignStyle = {
     width: '100%',
     height: '120px',
-    marginTop: 'auto', // Pushes footer to the very bottom
+    marginTop: 'auto',
     borderTop: '5px solid #cc0000',
     overflow: 'hidden'
   };
@@ -82,10 +109,7 @@ export default function Landing({ onGetStarted }) {
     <div style={pageContainer}>
       {/* 1. Branding Area */}
       <div style={brandingSection}>
-        {/* Main centered LGU Logo */}
         <img src="/lgu-logo.png" alt="LGU Logo" style={mainLogoStyle} />
-        
-        {/* White branding logo on a red background badge */}
         <img src="/better-pililla.png" alt="Better Pililla" style={secondaryBrandingStyle} />
       </div>
 
@@ -108,12 +132,31 @@ export default function Landing({ onGetStarted }) {
         </button>
       </div>
 
-      {/* 3. Footer Branding Text */}
+      {/* 3. NEW: APK Download Section */}
+      <div style={apkSectionStyle}>
+        <p style={{ margin: '0 0 5px 0', fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
+          📱 OFFICIAL MOBILE APP
+        </p>
+        <p style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666' }}>
+          Download the Android version for on-the-go travel requests.
+        </p>
+        <a 
+          href={apkUrl} 
+          download="LGU_Pililla_Travel.apk"
+          style={downloadBtnStyle}
+          onMouseOver={(e) => e.target.style.backgroundColor = '#218838'}
+          onMouseOut={(e) => e.target.style.backgroundColor = '#28a745'}
+        >
+          DOWNLOAD FOR ANDROID (.APK)
+        </a>
+      </div>
+
+      {/* 4. Footer Branding Text */}
       <div style={{ padding: '30px 0 10px 0', color: '#888', fontSize: '12px', fontWeight: 'bold' }}>
         MUNICIPALITY OF PILILLA, RIZAL • OFFICIAL GOVERNMENT TOOL • 2026
       </div>
 
-      {/* 4. Footer Image Design (Now at the bottom) */}
+      {/* 5. Footer Image Design */}
       <div style={footerDesignStyle}>
         <img 
           src="/lgu-design.png" 

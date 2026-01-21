@@ -1,0 +1,9 @@
+{
+  "appId": "com.lgupililla.travel",
+  "appName": "LGU Pililla Travel",
+  "webDir": "dist",
+  "server": {
+    "url": "https://travel-authority.vercel.app",
+    "cleartext": true
+  }
+}

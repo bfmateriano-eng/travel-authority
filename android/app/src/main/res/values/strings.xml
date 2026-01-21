@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">LGU Pililla Travel</string>
+    <string name="title_activity_main">LGU Pililla Travel</string>
+    <string name="package_name">com.lgupililla.travel</string>
+    <string name="custom_url_scheme">com.lgupililla.travel</string>
+</resources>
