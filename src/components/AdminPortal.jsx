@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 
-// --- MOVE MODAL OUTSIDE THE MAIN COMPONENT TO FIX FOCUS ISSUE ---
+// --- REVIEW MODAL COMPONENT ---
 const ReviewModal = ({ req, adminRemarks, setAdminRemarks, onUpdate, onClose }) => (
   <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
     <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '12px', width: '100%', maxWidth: '800px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 10px 30px rgba(0,0,0,0.3)' }}>
@@ -11,7 +11,7 @@ const ReviewModal = ({ req, adminRemarks, setAdminRemarks, onUpdate, onClose }) 
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
         <div>
-          <p style={{ margin: '5px 0' }}><strong>SENDER OFFICE:</strong> {req.profiles?.office_name}</p>
+          <p style={{ margin: '5px 0' }}><strong>SENDER OFFICE:</strong> {req.profiles?.office_name || 'N/A'}</p>
           <p style={{ margin: '5px 0' }}><strong>DESTINATION:</strong> {req.destination}</p>
           <p style={{ margin: '5px 0' }}><strong>TRAVEL TYPE:</strong> {req.travel_type}</p>
         </div>
@@ -38,7 +38,7 @@ const ReviewModal = ({ req, adminRemarks, setAdminRemarks, onUpdate, onClose }) 
         <tbody>
           {req.personnel?.map((p, i) => (
             <tr key={i}>
-              <td style={{ padding: '10px', border: '1px solid #ddd' }}>{p.name.toUpperCase()}</td>
+              <td style={{ padding: '10px', border: '1px solid #ddd' }}>{p.name?.toUpperCase()}</td>
               <td style={{ padding: '10px', border: '1px solid #ddd' }}>{p.position} ({p.office})</td>
             </tr>
           ))}
@@ -47,10 +47,10 @@ const ReviewModal = ({ req, adminRemarks, setAdminRemarks, onUpdate, onClose }) 
 
       {req.file_url && (
         <div style={{ marginTop: '20px', padding: '15px', border: '1px solid #ddd', borderRadius: '8px', textAlign: 'center' }}>
-           <p style={{ margin: '0 0 10px 0', fontSize: '13px', fontWeight: 'bold' }}>Supporting Document Attached:</p>
-           <a href={req.file_url} target="_blank" rel="noreferrer" style={{ display: 'inline-block', padding: '10px 25px', backgroundColor: '#cc0000', color: 'white', textDecoration: 'none', borderRadius: '5px', fontWeight: 'bold' }}>
-             VIEW / DOWNLOAD FILE
-           </a>
+            <p style={{ margin: '0 0 10px 0', fontSize: '13px', fontWeight: 'bold' }}>Supporting Document Attached:</p>
+            <a href={req.file_url} target="_blank" rel="noreferrer" style={{ display: 'inline-block', padding: '10px 25px', backgroundColor: '#cc0000', color: 'white', textDecoration: 'none', borderRadius: '5px', fontWeight: 'bold' }}>
+              VIEW / DOWNLOAD FILE
+            </a>
         </div>
       )}
 
@@ -76,11 +76,12 @@ const ReviewModal = ({ req, adminRemarks, setAdminRemarks, onUpdate, onClose }) 
   </div>
 );
 
+// --- MAIN ADMIN PORTAL COMPONENT ---
 export default function AdminPortal({ supabase }) {
   const [dataList, setDataList] = useState([]);
   const [selectedReq, setSelectedReq] = useState(null);
   const [adminRemarks, setAdminRemarks] = useState('');
-  const [activeTab, setActiveTab] = useState('pending'); // pending, approved, denied, office_approvals
+  const [activeTab, setActiveTab] = useState('pending');
   const [sortOrder, setSortOrder] = useState('desc');
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
@@ -96,9 +97,15 @@ export default function AdminPortal({ supabase }) {
       let query;
       
       if (activeTab === 'office_approvals') {
-        query = supabase.from('profiles').select('*').eq('is_approved', false).eq('is_admin', false);
+        // Optimized query: We fetch email and other registration details from 'profiles'
+        // Adjusted to ensure compatibility with your 'travel_authority' project
+        query = supabase
+          .from('profiles')
+          .select('id, office_name, office_head, email, created_at')
+          .eq('is_approved', false);
+        
         if (searchTerm) {
-          query = query.ilike('office_name', `%${searchTerm}%`);
+          query = query.or(`office_name.ilike.%${searchTerm}%,office_head.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`);
         }
       } else {
         query = supabase.from('travel_requests').select('*, profiles:user_id(office_name, office_head)');
@@ -107,17 +114,20 @@ export default function AdminPortal({ supabase }) {
         else if (activeTab === 'denied') query = query.eq('status', 'Denied');
 
         if (searchTerm) {
-          // Note: Searching across joined tables with or() requires careful syntax in Supabase
-          // For simplicity, we search destination and description
           query = query.or(`destination.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
         }
       }
 
       const { data, error } = await query.order('created_at', { ascending: sortOrder === 'asc' });
+      
       if (error) throw error;
       setDataList(data || []);
     } catch (err) { 
-      console.error(err.message); 
+      console.error("Fetch Error:", err.message);
+      // If the error is about a missing column, this helps diagnose it
+      if (err.message.includes("column")) {
+        console.warn("Database Alert: One of the requested columns (email, office_head, or is_admin) is likely missing in your current Supabase project.");
+      }
     } finally {
       setLoading(false);
     }
@@ -143,6 +153,9 @@ export default function AdminPortal({ supabase }) {
   };
 
   const handleOfficeAction = async (officeId) => {
+    const confirmApprove = window.confirm("Are you sure you want to approve this office for system access?");
+    if (!confirmApprove) return;
+
     const { error } = await supabase.from('profiles').update({ is_approved: true }).eq('id', officeId);
     if (!error) {
         alert("Office Approved Successfully!");
@@ -213,8 +226,8 @@ export default function AdminPortal({ supabase }) {
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ textAlign: 'left', borderBottom: '2px solid #eee', fontSize: '13px', color: '#666' }}>
-                  <th style={{ padding: '15px' }}>{activeTab === 'office_approvals' ? 'OFFICE NAME' : 'SENDER / OFFICE'}</th>
-                  <th style={{ padding: '15px' }}>{activeTab === 'office_approvals' ? 'OFFICE HEAD' : 'DETAILS'}</th>
+                  <th style={{ padding: '15px' }}>{activeTab === 'office_approvals' ? 'IDENTIFIER (EMAIL)' : 'SENDER / OFFICE'}</th>
+                  <th style={{ padding: '15px' }}>{activeTab === 'office_approvals' ? 'OFFICE NAME / HEAD' : 'DETAILS'}</th>
                   <th style={{ padding: '15px' }}>SUBMITTED</th>
                   <th style={{ padding: '15px' }}>ACTION</th>
                 </tr>
@@ -231,10 +244,20 @@ export default function AdminPortal({ supabase }) {
                     onMouseOut={(e) => activeTab !== 'office_approvals' && (e.currentTarget.style.backgroundColor = 'transparent')}
                   >
                     <td style={{ padding: '15px', fontWeight: 'bold' }}>
-                      {activeTab === 'office_approvals' ? item.office_name : (item.profiles?.office_name || "Unknown Office")}
+                      {activeTab === 'office_approvals' ? (
+                        <div>
+                          <div style={{ color: '#333' }}>{item.email || "No Email Provided"}</div>
+                          <div style={{ fontSize: '11px', color: '#777', fontWeight: 'normal' }}>ID: {item.id.substring(0,8)}...</div>
+                        </div>
+                      ) : (item.profiles?.office_name || "Unknown Office")}
                     </td>
                     <td style={{ padding: '15px' }}>
-                      {activeTab === 'office_approvals' ? item.office_head : (
+                      {activeTab === 'office_approvals' ? (
+                        <div>
+                          <div style={{ fontWeight: '500' }}>{item.office_name || "PENDING NAME"}</div>
+                          <div style={{ fontSize: '11px', color: '#777' }}>Head: {item.office_head || "PENDING HEAD"}</div>
+                        </div>
+                      ) : (
                         <div>
                           <div style={{ fontWeight: '500' }}>To: {item.destination}</div>
                           <div style={{ fontSize: '11px', color: '#777' }}>{item.travel_type}</div>
@@ -247,7 +270,7 @@ export default function AdminPortal({ supabase }) {
                     <td style={{ padding: '15px' }}>
                       {activeTab === 'office_approvals' ? (
                         <button 
-                          onClick={() => handleOfficeAction(item.id)} 
+                          onClick={(e) => { e.stopPropagation(); handleOfficeAction(item.id); }} 
                           style={{ backgroundColor: '#0E9F6E', color: 'white', border: 'none', padding: '8px 12px', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}
                         >
                           APPROVE OFFICE
