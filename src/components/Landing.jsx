@@ -3,7 +3,13 @@ import React from 'react';
 export default function Landing({ onGetStarted }) {
   const apkUrl = "https://ioulrydbxhjxoxdnulbp.supabase.co/storage/v1/object/public/public-files/pililla-to.apk";
 
-  // Existing Styles
+  // UPDATED FUNCTION: Direct assignment is the most robust way to trigger APK downloads
+  const handleDownload = () => {
+    // This bypasses CORS fetch issues and lets the browser's native download manager take over
+    window.location.assign(apkUrl);
+  };
+
+  // --- STYLES (Unchanged to preserve your design) ---
   const pageContainer = {
     minHeight: '100vh',
     display: 'flex',
@@ -72,7 +78,6 @@ export default function Landing({ onGetStarted }) {
     transition: 'transform 0.2s'
   };
 
-  // New APK Section Styles
   const apkSectionStyle = {
     marginTop: '50px',
     padding: '20px',
@@ -86,15 +91,17 @@ export default function Landing({ onGetStarted }) {
 
   const downloadBtnStyle = {
     display: 'inline-block',
-    backgroundColor: '#28a745', // Green for mobile/android feel
+    backgroundColor: '#28a745',
     color: 'white',
     padding: '12px 24px',
     fontSize: '14px',
     fontWeight: 'bold',
-    textDecoration: 'none',
+    border: 'none',
     borderRadius: '8px',
     marginTop: '10px',
-    transition: 'background-color 0.2s'
+    cursor: 'pointer',
+    transition: 'background-color 0.2s',
+    fontFamily: 'sans-serif'
   };
 
   const footerDesignStyle = {
@@ -132,7 +139,7 @@ export default function Landing({ onGetStarted }) {
         </button>
       </div>
 
-      {/* 3. NEW: APK Download Section */}
+      {/* 3. APK Download Section */}
       <div style={apkSectionStyle}>
         <p style={{ margin: '0 0 5px 0', fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
           📱 OFFICIAL MOBILE APP
@@ -140,15 +147,14 @@ export default function Landing({ onGetStarted }) {
         <p style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#666' }}>
           Download the Android version for on-the-go travel requests.
         </p>
-        <a 
-          href={apkUrl} 
-          download="LGU_Pililla_Travel.apk"
+        <button 
+          onClick={handleDownload} 
           style={downloadBtnStyle}
           onMouseOver={(e) => e.target.style.backgroundColor = '#218838'}
           onMouseOut={(e) => e.target.style.backgroundColor = '#28a745'}
         >
           DOWNLOAD FOR ANDROID (.APK)
-        </a>
+        </button>
       </div>
 
       {/* 4. Footer Branding Text */}
